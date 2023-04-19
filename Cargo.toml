@@ -8,3 +8,5 @@ edition = "2021"
 [dependencies]
 bevy = { version = "0.10", default_features = false }
 bevy_pixels = "0.9"
+bracket-noise = "0.8.7"
+rand = "0.8.5"
