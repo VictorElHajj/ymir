@@ -47,7 +47,7 @@ pub fn setup_simulation(mut cmd: Commands) {
         erosion: 0.5,
         gravity: 0.5,
         evaporation: 0.5,
-        max_steps: 100,
+        max_steps: 500,
         radius: 0.5,
     });
 }
@@ -55,60 +55,57 @@ pub fn setup_simulation(mut cmd: Commands) {
 pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
     let mut rng = rand::thread_rng();
 
-    // Will not spawn on edges
-    let start_pos = Vec2::new(
-        rng.gen_range(1.0..(WIDTH - 1) as f32),
-        rng.gen_range(1.0..(HEIGHT - 1) as f32),
-    );
+    terrain.clear_trace();
+    for _ in 0..100 {
+        // Will not spawn on edges
+        let start_pos = Vec2::new(
+            rng.gen_range(1.0..(WIDTH - 1) as f32),
+            rng.gen_range(1.0..(HEIGHT - 1) as f32),
+        );
 
-    //terrain.clear_trace();
-    terrain.set_trace(start_pos);
+        terrain.set_trace(start_pos);
 
-    let mut drop = Particle::new(start_pos);
+        let mut drop = Particle::new(start_pos);
 
-    for step in 0..=sim.max_steps {
-        // Is drop outside bounds or at edges?
-        if !terrain.inside(drop.pos) {
-            println!("Outside bounds! {step}");
-            break;
-        }
+        for _ in 0..=sim.max_steps {
+            // Is drop outside bounds or at edges?
+            if !terrain.inside(drop.pos) {
+                break;
+            }
 
-        // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
-        let x = drop.pos.x.floor() as usize;
-        let u = drop.pos.x.fract();
-        let y = drop.pos.y.floor() as usize;
-        let v = drop.pos.y.fract();
+            // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
+            let x = drop.pos.x.floor() as usize;
+            let u = drop.pos.x.fract();
+            let y = drop.pos.y.floor() as usize;
+            let v = drop.pos.y.fract();
 
-        let height = terrain.map[y][x];
+            let height = terrain.map[y][x];
 
-        // Is drop in local minimum?
-        if terrain
-            .neighbors(drop.pos)
-            .iter()
-            .all(|neighbor_height| *neighbor_height > &height)
-        {
-            // TODO drop sediment to fill gap?
-            println!("Local minima! {step}");
-            break;
-        }
+            // Is drop in local minimum?
+            if terrain
+                .neighbors(drop.pos)
+                .iter()
+                .all(|neighbor_height| *neighbor_height > &height)
+            {
+                // TODO drop sediment to fill gap?
+                break;
+            }
 
-        // Calculate gradient by bilinear interpolation of N, W, S and E neighbours.
-        let gradient = Vec2::new(
-            (terrain.map[y][x + 1] - terrain.map[y][x]) * (1. - v)
-                + (terrain.map[y + 1][x + 1] - terrain.map[y + 1][x]) * v,
-            (terrain.map[y + 1][x] - terrain.map[y][x]) * (1. - u)
-                + (terrain.map[y + 1][x + 1] - terrain.map[y][x + 1]) * u,
-        )
-        .normalize();
+            // Calculate gradient by bilinear interpolation of N, W, S and E neighbours.
+            let gradient = Vec2::new(
+                (terrain.map[y][x + 1] - terrain.map[y][x]) * (1. - v)
+                    + (terrain.map[y + 1][x + 1] - terrain.map[y + 1][x]) * v,
+                (terrain.map[y + 1][x] - terrain.map[y][x]) * (1. - u)
+                    + (terrain.map[y + 1][x + 1] - terrain.map[y][x + 1]) * u,
+            )
+            .normalize();
 
-        // New direction depends on old direction and gradient depending on inertia
-        drop.dir = (drop.dir * sim.inertia - gradient * (1. - sim.inertia)).normalize();
+            // New direction depends on old direction and gradient depending on inertia
+            drop.dir = (drop.dir * sim.inertia - gradient * (1. - sim.inertia)).normalize();
 
-        drop.pos += drop.dir;
+            drop.pos += drop.dir;
 
-        terrain.set_trace(drop.pos);
-        if step == sim.max_steps {
-            println!("Max {step}")
+            terrain.set_trace(drop.pos);
         }
     }
 }

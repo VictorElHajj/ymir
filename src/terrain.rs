@@ -2,14 +2,16 @@ use bevy::prelude::{Commands, Resource, Vec2};
 use bracket_noise::prelude::*;
 use rand::Rng;
 
-pub const WIDTH: usize = 240;
-pub const HEIGHT: usize = 180;
+pub const WIDTH: usize = 1600;
+pub const HEIGHT: usize = 800;
 pub const SCALE_FACTOR: f32 = 1.0;
+
+type Matrix<T> = Box<[[T; WIDTH]; HEIGHT]>;
 
 #[derive(Resource)]
 pub struct Terrain {
-    pub map: [[f32; WIDTH]; HEIGHT],
-    trace: [[bool; WIDTH]; HEIGHT],
+    pub map: Matrix<f32>,
+    trace: Matrix<bool>,
 }
 
 impl Terrain {
@@ -24,7 +26,10 @@ impl Terrain {
         noise.set_fractal_lacunarity(2.0);
         noise.set_frequency(2.0);
 
-        let map = &mut [[0.0; WIDTH]; HEIGHT];
+        let mut map: Matrix<f32> = vec![[0.0; WIDTH]; HEIGHT]
+            .into_boxed_slice()
+            .try_into()
+            .unwrap();
         for i in 0..HEIGHT {
             for j in 0..WIDTH {
                 // + 0.5 to make range 0.0 - 1.0
@@ -43,8 +48,11 @@ impl Terrain {
             }
         }
         Terrain {
-            map: *map,
-            trace: [[false; WIDTH]; HEIGHT],
+            map,
+            trace: vec![[false; WIDTH]; HEIGHT]
+                .into_boxed_slice()
+                .try_into()
+                .unwrap(),
         }
     }
 
@@ -97,7 +105,10 @@ impl Terrain {
     }
 
     pub fn clear_trace(&mut self) {
-        self.trace = [[false; WIDTH]; HEIGHT];
+        self.trace = vec![[false; WIDTH]; HEIGHT]
+            .into_boxed_slice()
+            .try_into()
+            .unwrap();
     }
 
     pub fn set_trace(&mut self, pos: Vec2) {

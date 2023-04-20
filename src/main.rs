@@ -35,10 +35,10 @@ fn main() {
                 auto_resize_surface: false,
             }),
         })
-        .add_system(draw.in_set(PixelsSet::Draw))
         .add_startup_system(setup_terrain)
         .add_startup_system(setup_simulation)
         .add_system(trace_drop)
+        .add_system(draw.in_set(PixelsSet::Draw))
         .run();
 }
 
