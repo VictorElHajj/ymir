@@ -1,7 +1,9 @@
+mod simulation;
 mod terrain;
 
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_pixels::prelude::*;
+use simulation::*;
 use terrain::*;
 
 fn main() {
@@ -10,12 +12,12 @@ fn main() {
             primary_window: Some(Window {
                 title: "Ymir".to_string(),
                 resolution: WindowResolution::new(
-                    INITIAL_WIDTH as f32 * SCALE_FACTOR,
-                    INITIAL_HEIGHT as f32 * SCALE_FACTOR,
+                    WIDTH as f32 * SCALE_FACTOR,
+                    HEIGHT as f32 * SCALE_FACTOR,
                 ),
                 resize_constraints: WindowResizeConstraints {
-                    min_width: INITIAL_WIDTH as f32 * SCALE_FACTOR,
-                    min_height: INITIAL_HEIGHT as f32 * SCALE_FACTOR,
+                    min_width: WIDTH as f32 * SCALE_FACTOR,
+                    min_height: HEIGHT as f32 * SCALE_FACTOR,
                     ..default()
                 },
                 fit_canvas_to_parent: true,
@@ -25,15 +27,17 @@ fn main() {
         }))
         .add_plugin(PixelsPlugin {
             primary_window: Some(PixelsOptions {
-                width: INITIAL_WIDTH as u32,
-                height: INITIAL_HEIGHT as u32,
+                width: WIDTH as u32,
+                height: HEIGHT as u32,
                 scale_factor: SCALE_FACTOR,
                 auto_resize_buffer: false,
                 auto_resize_surface: false,
             }),
         })
-        .insert_resource(Terrain::new())
         .add_system(draw.in_set(PixelsSet::Draw))
+        .add_startup_system(setup_terrain)
+        .add_startup_system(setup_simulation)
+        .add_system(trace_drop)
         .run();
 }
 
@@ -46,4 +50,5 @@ fn draw(mut wrapper_query: Query<&mut PixelsWrapper>, terrain: Res<Terrain>) {
 
     // Fill frame with pixel data.
     terrain.height_map(frame);
+    terrain.draw_trace(frame);
 }
