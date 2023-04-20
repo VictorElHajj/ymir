@@ -32,11 +32,10 @@ impl Terrain {
                     noise.get_noise(i as f32 / HEIGHT as f32, j as f32 / WIDTH as f32) + 0.5;
 
                 /*
-                let distance_center =
-                    f32::sqrt(
-                        f32::powi(usize::abs_diff(j, WIDTH / 2) as f32, 2)
-                            + f32::powi(usize::abs_diff(i, HEIGHT / 2) as f32, 2),
-                    ) / f32::sqrt((WIDTH.pow(2) + HEIGHT.pow(2)) as f32);
+                let distance_center = f32::sqrt(
+                    f32::powi(usize::abs_diff(j, WIDTH / 2) as f32, 2)
+                        + f32::powi(usize::abs_diff(i, HEIGHT / 2) as f32, 2),
+                ) / f32::sqrt((WIDTH.pow(2) + HEIGHT.pow(2)) as f32);
                 */
 
                 // "Water level", with 0.4 ~ 60% of the world should be land
