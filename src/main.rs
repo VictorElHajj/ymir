@@ -1,3 +1,4 @@
+mod particle;
 mod simulation;
 mod terrain;
 

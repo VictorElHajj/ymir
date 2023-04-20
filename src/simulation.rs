@@ -1,7 +1,10 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::terrain::{Terrain, HEIGHT, WIDTH};
+use crate::{
+    particle::Particle,
+    terrain::{Terrain, HEIGHT, WIDTH},
+};
 
 // Contains the hydraulic erosion settings
 #[derive(Resource)]
@@ -51,9 +54,40 @@ pub fn setup_simulation(mut cmd: Commands) {
 
 pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
     let mut rng = rand::thread_rng();
+
+    // Will not spawn on edges
     let start_pos = Vec2::new(
-        rng.gen_range(0.0..WIDTH as f32),
-        rng.gen_range(0.0..HEIGHT as f32),
+        rng.gen_range(1.0..(WIDTH - 1) as f32),
+        rng.gen_range(1.0..(HEIGHT - 1) as f32),
     );
+
+    terrain.clear_trace();
     terrain.set_trace(start_pos);
+
+    let mut drop = Particle::new(start_pos);
+
+    for _ in 0..sim.max_steps {
+        // Is drop outside bounds or at edges?
+        if !terrain.inside(drop.pos) {
+            break;
+        }
+
+        // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
+        let x = drop.pos.x.floor() as usize;
+        let y = drop.pos.y.floor() as usize;
+
+        let height = terrain.map[y][x];
+
+        // Is drop in local minimum?
+        if terrain
+            .neighbors(drop.pos)
+            .iter()
+            .all(|neighbor_height| *neighbor_height < &height)
+        {
+            // TODO drop sediment to fill gap?
+            break;
+        }
+
+        // Calculate gradient
+    }
 }

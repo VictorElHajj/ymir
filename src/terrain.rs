@@ -8,7 +8,7 @@ pub const SCALE_FACTOR: f32 = 1.0;
 
 #[derive(Resource)]
 pub struct Terrain {
-    map: [[f32; WIDTH]; HEIGHT],
+    pub map: [[f32; WIDTH]; HEIGHT],
     trace: [[bool; WIDTH]; HEIGHT],
 }
 
@@ -40,13 +40,37 @@ impl Terrain {
                 */
 
                 // "Water level", with 0.4 ~ 60% of the world should be land
-                map[i][j] = if perlin < 0.4 { 0.0 } else { perlin };
+                map[i][j] = if perlin < 0.0 { 0.0 } else { perlin };
             }
         }
         Terrain {
             map: *map,
             trace: [[false; WIDTH]; HEIGHT],
         }
+    }
+
+    /// Is float position in bounds?
+    pub fn inside(&self, pos: Vec2) -> bool {
+        return pos.x >= 1.
+            && pos.x <= ((WIDTH - 1) as f32)
+            && pos.y >= 1.
+            && pos.y <= ((HEIGHT - 1) as f32);
+    }
+
+    /// Returns neighbors
+    pub fn neighbors(&self, pos: Vec2) -> [&f32; 8] {
+        let x = pos.x.floor() as usize;
+        let y = pos.y.floor() as usize;
+        [
+            &self.map[y - 1][x - 1],
+            &self.map[y - 1][x],
+            &self.map[y - 1][x + 1],
+            &self.map[y][x - 1],
+            &self.map[y][x + 1],
+            &self.map[y + 1][x - 1],
+            &self.map[y + 1][x],
+            &self.map[y + 1][x + 1],
+        ]
     }
 
     /// Iterate over map cells and fill frame with height value converted to RBGA
@@ -67,14 +91,17 @@ impl Terrain {
                 let frame_loc = y * WIDTH * 4 + x * 4;
                 let rgba_slice: &mut [u8] = &mut frame[frame_loc..frame_loc + 4];
                 if let true = cell {
-                    rgba_slice.copy_from_slice(&[0, 255, 0, 255]);
+                    rgba_slice.copy_from_slice(&[0, 0, 255, 255]);
                 }
             }
         }
     }
 
-    pub fn set_trace(&mut self, pos: Vec2) {
+    pub fn clear_trace(&mut self) {
         self.trace = [[false; WIDTH]; HEIGHT];
+    }
+
+    pub fn set_trace(&mut self, pos: Vec2) {
         self.trace[pos.y as usize][pos.x as usize] = true;
     }
 }
