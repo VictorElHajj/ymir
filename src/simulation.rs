@@ -55,12 +55,13 @@ pub fn setup_simulation(mut cmd: Commands) {
 pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
     let mut rng = rand::thread_rng();
 
-    terrain.clear_trace();
-    for _ in 0..100 {
+    //terrain.clear_trace();
+    for _ in 0..1000 {
         // Will not spawn on edges
+        // The 0.1 here are margins to avoid neighbor check falling out of bounds
         let start_pos = Vec2::new(
-            rng.gen_range(1.0..(WIDTH - 1) as f32),
-            rng.gen_range(1.0..(HEIGHT - 1) as f32),
+            rng.gen_range(1.1..(WIDTH - 1) as f32 - 0.1),
+            rng.gen_range(1.1..(HEIGHT - 1) as f32 - 0.1),
         );
 
         terrain.set_trace(start_pos);
