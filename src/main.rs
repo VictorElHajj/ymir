@@ -1,11 +1,8 @@
-mod particle;
-mod simulation;
-mod terrain;
-
 use bevy::{prelude::*, window::WindowResolution};
 use bevy_pixels::prelude::*;
-use simulation::*;
-use terrain::*;
+
+use sim::simulation::*;
+use sim::terrain::*;
 
 fn main() {
     App::new()
@@ -37,7 +34,7 @@ fn main() {
         })
         .add_startup_system(setup_terrain)
         .add_startup_system(setup_simulation)
-        .add_system(trace_drop)
+        .add_system(drop_system)
         .add_system(draw.in_set(PixelsSet::Draw))
         .run();
 }

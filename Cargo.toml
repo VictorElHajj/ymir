@@ -4,9 +4,17 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[lib]
+name = "sim"
+path = "src/sim/lib.rs"
 
 [dependencies]
 bevy = { version = "0.10", default_features = false }
 bevy_pixels = "0.9"
 bracket-noise = "0.8.7"
+criterion = { version = "0.4", features = ["html_reports"] }
 rand = "0.8.5"
+
+[[bench]]
+name = "ymir_bench"
+harness = false

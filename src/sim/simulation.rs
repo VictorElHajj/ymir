@@ -1,30 +1,28 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::{
-    particle::Particle,
-    terrain::{Terrain, HEIGHT, WIDTH},
-};
+use crate::particle::*;
+use crate::terrain::*;
 
 // Contains the hydraulic erosion settings
 #[derive(Resource)]
 pub struct Simulation {
     // The blend value between old direction and gradient
-    inertia: f32,
+    pub inertia: f32,
     // The amount of sediment a drop is capabale of holding.
-    capacity: f32,
+    pub capacity: f32,
     // Used to prevent capacity from reaching 0 in flat areas if desired.
-    min_slope: f32,
+    pub min_slope: f32,
     // Speed of erosion
-    erosion: f32,
+    pub erosion: f32,
     // Gravity, self explanetory
-    gravity: f32,
+    pub gravity: f32,
     // How fast water evaporates
-    evaporation: f32,
+    pub evaporation: f32,
     // How many steps max to simulate each drop
-    max_steps: u32,
+    pub max_steps: u32,
     // The radius of erosion around the drop
-    radius: f32,
+    pub radius: f32,
 }
 
 // For each drop:
@@ -41,7 +39,7 @@ pub struct Simulation {
 
 pub fn setup_simulation(mut cmd: Commands) {
     cmd.insert_resource(Simulation {
-        inertia: 0.5,
+        inertia: 0.4,
         capacity: 0.5,
         min_slope: 0.5,
         erosion: 0.5,
@@ -52,11 +50,11 @@ pub fn setup_simulation(mut cmd: Commands) {
     });
 }
 
-pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
+pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
     let mut rng = rand::thread_rng();
 
-    //terrain.clear_trace();
-    for _ in 0..1000 {
+    terrain.clear_trace();
+    for _ in 0..drops {
         // Will not spawn on edges
         // The 0.1 here are margins to avoid neighbor check falling out of bounds
         let start_pos = Vec2::new(
@@ -97,4 +95,8 @@ pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
             terrain.set_trace(drop.pos);
         }
     }
+}
+
+pub fn drop_system(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
+    simulate_drops(&sim, &mut terrain, 100);
 }
