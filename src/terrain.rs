@@ -23,7 +23,7 @@ impl Terrain {
         noise.set_fractal_type(FractalType::FBM);
         noise.set_fractal_octaves(5);
         noise.set_fractal_gain(0.6);
-        noise.set_fractal_lacunarity(2.0);
+        noise.set_fractal_lacunarity(1.5);
         noise.set_frequency(2.0);
 
         let mut map: Matrix<f32> = vec![[0.0; WIDTH]; HEIGHT]
@@ -58,10 +58,12 @@ impl Terrain {
 
     /// Is float position in bounds?
     pub fn inside(&self, pos: Vec2) -> bool {
-        return pos.x >= 1.
-            && pos.x <= ((WIDTH - 1) as f32)
-            && pos.y >= 1.
-            && pos.y <= ((HEIGHT - 1) as f32);
+        // Will gradient check give index out of bounds?
+        if pos.x as usize + 1 == WIDTH || pos.y as usize + 1 == HEIGHT {
+            return false;
+        }
+        // Actual bounds check
+        return pos.x >= 0. && pos.x <= (WIDTH as f32) && pos.y >= 0. && pos.y <= (HEIGHT as f32);
     }
 
     /// Returns neighbors

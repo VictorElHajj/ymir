@@ -60,8 +60,8 @@ pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
         // Will not spawn on edges
         // The 0.1 here are margins to avoid neighbor check falling out of bounds
         let start_pos = Vec2::new(
-            rng.gen_range(1.1..(WIDTH - 1) as f32 - 0.1),
-            rng.gen_range(1.1..(HEIGHT - 1) as f32 - 0.1),
+            rng.gen_range(0.0..(WIDTH - 2) as f32),
+            rng.gen_range(0.0..(HEIGHT - 2) as f32),
         );
 
         terrain.set_trace(start_pos);
@@ -79,18 +79,6 @@ pub fn trace_drop(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
             let u = drop.pos.x.fract();
             let y = drop.pos.y.floor() as usize;
             let v = drop.pos.y.fract();
-
-            let height = terrain.map[y][x];
-
-            // Is drop in local minimum?
-            if terrain
-                .neighbors(drop.pos)
-                .iter()
-                .all(|neighbor_height| *neighbor_height > &height)
-            {
-                // TODO drop sediment to fill gap?
-                break;
-            }
 
             // Calculate gradient by bilinear interpolation of N, W, S and E neighbours.
             let gradient = Vec2::new(
