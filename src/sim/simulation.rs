@@ -46,7 +46,7 @@ pub fn setup_simulation(mut cmd: Commands) {
         erosion: 0.7,
         evaporation: 0.02,
         gravity: 10.,
-        inertia: 0.3,
+        inertia: 0.5,
         max_steps: 64,
         min_slope: 0.01,
         radius: 4,
@@ -56,7 +56,7 @@ pub fn setup_simulation(mut cmd: Commands) {
 pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
     let mut rng = rand::thread_rng();
 
-    terrain.clear_trace();
+    //terrain.clear_trace();
     for _ in 0..drops {
         // Will not spawn on edges
         // The 0.1 here are margins to avoid neighbor check falling out of bounds
@@ -65,7 +65,7 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
             rng.gen_range(0.0..(HEIGHT - 2) as f32),
         );
 
-        terrain.set_trace(start_pos);
+        //terrain.set_trace(start_pos);
 
         let mut drop = Particle::new(start_pos);
 
@@ -93,7 +93,7 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
 
             // Drop moved uphill, deposit sediment up to new height
             if height_delta < 0. {
-                let deposited_sediment = f32::min(drop.sediment, height_delta);
+                let deposited_sediment = f32::min(drop.sediment, -height_delta);
                 terrain.deposit(&pos_old, deposited_sediment);
                 drop.sediment -= deposited_sediment;
             } else {
@@ -130,11 +130,11 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
             ));
             drop.water = drop.water * (1. - sim.evaporation);
 
-            terrain.set_trace(drop.pos);
+            //terrain.set_trace(drop.pos);
         }
     }
 }
 
 pub fn drop_system(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
-    simulate_drops(&sim, &mut terrain, 1000);
+    simulate_drops(&sim, &mut terrain, 5000);
 }

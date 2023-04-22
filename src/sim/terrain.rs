@@ -21,9 +21,9 @@ impl Terrain {
         let mut noise = FastNoise::seeded(rng.gen::<u64>());
         noise.set_noise_type(NoiseType::PerlinFractal);
         noise.set_fractal_type(FractalType::FBM);
-        noise.set_fractal_octaves(5);
+        noise.set_fractal_octaves(7);
         noise.set_fractal_gain(0.6);
-        noise.set_fractal_lacunarity(1.5);
+        noise.set_fractal_lacunarity(1.7);
         noise.set_frequency(2.0);
 
         let mut map: Matrix<f32> = vec![[0.0; WIDTH]; HEIGHT]
@@ -170,21 +170,28 @@ impl Terrain {
         }
         for ((x, y), dist_val) in positions {
             let weight = dist_val / sum;
-            if self.map[y][x] - deposit_amount * weight < 0. {
-                self.map[y][x] = 0.;
-            } else {
-                self.map[y][x] -= deposit_amount * weight;
-            }
+            self.map[y][x] -= deposit_amount * weight;
         }
     }
 
     /// Iterate over map cells and fill frame with height value converted to RBGA
     pub fn height_map(&self, frame: &mut [u8]) {
+        let mut max_height = f32::MIN;
+        let mut min_height = f32::MAX;
+        for row in self.map.iter() {
+            for cell in row.iter() {
+                max_height = cell.max(max_height);
+                min_height = cell.min(min_height);
+            }
+        }
+
+        let range = max_height - min_height;
         for (y, row) in self.map.iter().enumerate() {
             for (x, cell) in row.iter().enumerate() {
                 let frame_loc = y * WIDTH * 4 + x * 4;
                 let rgba_slice: &mut [u8] = &mut frame[frame_loc..frame_loc + 4];
-                let color = (cell * 255.0) as u8;
+                let normalized_height = (cell - min_height) / range;
+                let color = (normalized_height * 255.0) as u8;
                 rgba_slice.copy_from_slice(&[color, color, color, 255]);
             }
         }
