@@ -5,14 +5,15 @@ use sim::terrain::*;
 
 fn criterion_benchmark(c: &mut Criterion) {
     let sim = Simulation {
-        inertia: 0.4,
         capacity: 0.5,
-        min_slope: 0.5,
+        deposition: 0.2,
         erosion: 0.5,
-        gravity: 0.5,
         evaporation: 0.5,
+        gravity: 0.5,
+        inertia: 0.4,
         max_steps: 100,
-        radius: 0.5,
+        min_slope: 0.5,
+        radius: 4,
     };
     let mut terrain = Terrain::new();
     c.bench_function("Simulate drops (1000)", |b| {

@@ -22,7 +22,9 @@ pub struct Simulation {
     // How many steps max to simulate each drop
     pub max_steps: u32,
     // The radius of erosion around the drop
-    pub radius: f32,
+    pub radius: usize,
+    // How much sediment to drop when over carrying capacity
+    pub deposition: f32,
 }
 
 // For each drop:
@@ -39,14 +41,15 @@ pub struct Simulation {
 
 pub fn setup_simulation(mut cmd: Commands) {
     cmd.insert_resource(Simulation {
-        inertia: 0.4,
-        capacity: 0.5,
-        min_slope: 0.5,
-        erosion: 0.5,
-        gravity: 0.5,
-        evaporation: 0.5,
-        max_steps: 100,
-        radius: 0.5,
+        capacity: 8.,
+        deposition: 0.2,
+        erosion: 0.7,
+        evaporation: 0.02,
+        gravity: 10.,
+        inertia: 0.3,
+        max_steps: 64,
+        min_slope: 0.01,
+        radius: 4,
     });
 }
 
@@ -72,25 +75,57 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
                 break;
             }
 
-            // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
-            let x = drop.pos.x.floor() as usize;
-            let u = drop.pos.x.fract();
-            let y = drop.pos.y.floor() as usize;
-            let v = drop.pos.y.fract();
-
-            // Calculate gradient by bilinear interpolation of N, W, S and E neighbours.
-            let gradient = Vec2::new(
-                (terrain.map[y][x + 1] - terrain.map[y][x]) * (1. - v)
-                    + (terrain.map[y + 1][x + 1] - terrain.map[y + 1][x]) * v,
-                (terrain.map[y + 1][x] - terrain.map[y][x]) * (1. - u)
-                    + (terrain.map[y + 1][x + 1] - terrain.map[y][x + 1]) * u,
-            )
-            .normalize();
+            let gradient = terrain.gradient(&drop.pos);
+            let height_old = terrain.height(&drop.pos);
 
             // New direction depends on old direction and gradient depending on inertia
             drop.dir = (drop.dir * sim.inertia - gradient * (1. - sim.inertia)).normalize();
-
+            let pos_old = drop.pos;
             drop.pos += drop.dir;
+
+            // Is drop's new position outside bounds or at edges?
+            if !terrain.inside(drop.pos) {
+                break;
+            }
+
+            let height_new = terrain.height(&drop.pos);
+            let height_delta = height_old - height_new;
+
+            // Drop moved uphill, deposit sediment up to new height
+            if height_delta < 0. {
+                let deposited_sediment = f32::min(drop.sediment, height_delta);
+                terrain.deposit(&pos_old, deposited_sediment);
+                drop.sediment -= deposited_sediment;
+            } else {
+                // Drop sediment carrying capacity
+                let carrying_capacity = f32::max(height_delta, sim.min_slope)
+                    * drop.velocity
+                    * drop.water
+                    * sim.capacity;
+                // Drop moved downhill
+                if drop.sediment > carrying_capacity {
+                    // Drop has more sediment than carrying capacity, drop
+                    let deposited_sediment = (drop.sediment - carrying_capacity) * sim.deposition;
+                    terrain.deposit(&pos_old, deposited_sediment);
+                    drop.sediment -= deposited_sediment;
+                } else {
+                    // Drop has less sediment than carrying capacity, gather
+                    let eroded_sediment = f32::min(
+                        (carrying_capacity - drop.sediment) * sim.erosion,
+                        height_delta,
+                    );
+                    terrain.erode(&pos_old, eroded_sediment, sim.radius);
+                    drop.sediment += eroded_sediment;
+                }
+            }
+
+            // Update velocity and evaporate water
+
+            drop.velocity = f32::sqrt(f32::max(
+                0.,
+                drop.velocity.powi(2) + height_delta * sim.gravity,
+            ));
+            drop.water = drop.water * (1. - sim.evaporation);
 
             terrain.set_trace(drop.pos);
         }
@@ -98,5 +133,5 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
 }
 
 pub fn drop_system(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
-    simulate_drops(&sim, &mut terrain, 1000);
+    simulate_drops(&sim, &mut terrain, 100);
 }

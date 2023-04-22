@@ -82,6 +82,102 @@ impl Terrain {
         ]
     }
 
+    /// Calculate gradient of float pos by bilinear interpolation
+    pub fn gradient(&self, pos: &Vec2) -> Vec2 {
+        // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
+        let x = pos.x.floor() as usize;
+        let u = pos.x.fract();
+        let y = pos.y.floor() as usize;
+        let v = pos.y.fract();
+
+        let ne = self.map[y][x + 1];
+        let se = self.map[y + 1][x + 1];
+        let nw = self.map[y][x];
+        let sw = self.map[y + 1][x];
+
+        // Calculate gradient by bilinear interpolation
+        Vec2::new(
+            (ne - nw) * (1. - v) + (se - sw) * v,
+            (sw - nw) * (1. - u) + (se - ne) * u,
+        )
+        .normalize()
+    }
+
+    /// Calculate height of float pos by bilinear interpolation
+    pub fn height(&self, pos: &Vec2) -> f32 {
+        // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
+        let x = pos.x.floor() as usize;
+        let u = pos.x.fract();
+        let y = pos.y.floor() as usize;
+        let v = pos.y.fract();
+
+        let ne = self.map[y][x + 1];
+        let se = self.map[y + 1][x + 1];
+        let nw = self.map[y][x];
+        let sw = self.map[y + 1][x];
+
+        nw * (1. - u) * (1. - v) + ne * u * (1. - v) + sw * (1. - u) * v + se * u * v
+    }
+
+    /// Deposit sediment by bilinear interpolation
+    pub fn deposit(&mut self, pos: &Vec2, deposit_amount: f32) {
+        // Let x and y be ints such that drop.pos = (x + u, y + v) where u and v are real
+        let x = pos.x.floor() as usize;
+        let u = pos.x.fract();
+        let y = pos.y.floor() as usize;
+        let v = pos.y.fract();
+
+        // NE
+        self.map[y][x + 1] += deposit_amount * u * (1. - v);
+        // SE
+        self.map[y + 1][x + 1] += deposit_amount * u * v;
+        // NW
+        self.map[y][x] += deposit_amount * (1. - u) * (1. - v);
+        // SW
+        self.map[y + 1][x] += deposit_amount * (1. - u) * v;
+    }
+
+    /// Erode sediment from terrain cells within radius
+    pub fn erode(&mut self, pos: &Vec2, deposit_amount: f32, radius: usize) {
+        let origin_x = pos.x.floor() as usize;
+        let origin_y = pos.y.floor() as usize;
+        let mut positions: Vec<((usize, usize), f32)> = Vec::with_capacity((radius * 2 + 1).pow(2));
+        let mut sum = 0.0;
+
+        // Ternary to avoid subtracting with overflow
+        let y_start = if radius > origin_y {
+            0
+        } else {
+            origin_y - radius
+        };
+        let x_start = if radius > origin_x {
+            0
+        } else {
+            origin_x - radius
+        };
+        for y in y_start..usize::min(HEIGHT, origin_y + radius) {
+            for x in x_start..usize::min(WIDTH, origin_x + radius) {
+                // Is cell within radius?
+                if usize::abs_diff(origin_y, y).pow(2) + usize::abs_diff(origin_x, x).pow(2)
+                    < radius.pow(2)
+                {
+                    let grid_pos = Vec2::new(x as f32, y as f32);
+                    let dist_val = f32::max(0., radius as f32 - pos.distance(grid_pos));
+                    sum += dist_val;
+                    positions.push(((x, y), dist_val));
+                }
+            }
+        }
+        for ((x, y), dist_val) in positions {
+            let weight = dist_val / sum;
+            if self.map[y][x] - deposit_amount * weight < 0. {
+                self.map[y][x] = 0.;
+            } else {
+                self.map[y][x] -= deposit_amount * weight;
+            }
+        }
+    }
+
     /// Iterate over map cells and fill frame with height value converted to RBGA
     pub fn height_map(&self, frame: &mut [u8]) {
         for (y, row) in self.map.iter().enumerate() {
