@@ -45,7 +45,7 @@ pub fn setup_simulation(mut cmd: Commands) {
         erosion: 0.5,
         gravity: 0.5,
         evaporation: 0.5,
-        max_steps: 500,
+        max_steps: 100,
         radius: 0.5,
     });
 }
@@ -98,5 +98,5 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
 }
 
 pub fn drop_system(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
-    simulate_drops(&sim, &mut terrain, 100);
+    simulate_drops(&sim, &mut terrain, 1000);
 }
