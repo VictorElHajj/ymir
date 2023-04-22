@@ -105,7 +105,10 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
                 // Drop moved downhill
                 if drop.sediment > carrying_capacity {
                     // Drop has more sediment than carrying capacity, drop
-                    let deposited_sediment = (drop.sediment - carrying_capacity) * sim.deposition;
+                    let deposited_sediment = f32::min(
+                        height_delta,
+                        (drop.sediment - carrying_capacity) * sim.deposition,
+                    );
                     terrain.deposit(&pos_old, deposited_sediment);
                     drop.sediment -= deposited_sediment;
                 } else {
@@ -133,5 +136,5 @@ pub fn simulate_drops(sim: &Simulation, terrain: &mut Terrain, drops: usize) {
 }
 
 pub fn drop_system(sim: Res<Simulation>, mut terrain: ResMut<Terrain>) {
-    simulate_drops(&sim, &mut terrain, 100);
+    simulate_drops(&sim, &mut terrain, 1000);
 }
