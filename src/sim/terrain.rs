@@ -23,7 +23,7 @@ impl Terrain {
         noise.set_fractal_type(FractalType::FBM);
         noise.set_fractal_octaves(7);
         noise.set_fractal_gain(0.6);
-        noise.set_fractal_lacunarity(1.7);
+        noise.set_fractal_lacunarity(1.5);
         noise.set_frequency(2.0);
 
         let mut map: Matrix<f32> = vec![[0.0; WIDTH]; HEIGHT]

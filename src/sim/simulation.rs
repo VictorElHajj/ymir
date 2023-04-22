@@ -47,8 +47,8 @@ pub fn setup_simulation(mut cmd: Commands) {
         evaporation: 0.02,
         gravity: 10.,
         inertia: 0.5,
-        max_steps: 64,
-        min_slope: 0.01,
+        max_steps: 128,
+        min_slope: 0.1,
         radius: 4,
     });
 }
